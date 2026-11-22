@@ -4,7 +4,7 @@
 !.env.example
 
 # служебные файлы
-tools/pond/node_modules/
+tools/*/node_modules/
 *.log
 Thumbs.db
 desktop.ini
