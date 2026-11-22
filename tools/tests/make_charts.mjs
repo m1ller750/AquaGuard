@@ -1,6 +1,8 @@
 // Строит графики по data/test_runs/results.json в формате SVG (docs/figures).
 // PNG получаются отдельным шагом (tools/tests/svg2png.ps1) через headless Edge.
 import fs from 'fs';
+import { createRequire } from 'module';
+const { DOMParser } = createRequire(import.meta.url)('../docs/node_modules/@xmldom/xmldom');
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -20,6 +22,7 @@ const nice = (lo, hi, n = 6) => {
   const ticks = []; for (let v = a; v <= b + step / 2; v += step) ticks.push(+v.toFixed(10));
   return { a, b, ticks };
 };
+const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const fmt = (v) => (Math.abs(v) >= 100 || Number.isInteger(v) ? String(Math.round(v * 100) / 100) : String(+v.toFixed(2))).replace('.', ',');
 
 function chart({ file, xLabel, yl, yr, series, xticks, xmin, xmax }) {
@@ -41,9 +44,9 @@ function chart({ file, xLabel, yl, yr, series, xticks, xmin, xmax }) {
   if (axes.r) for (const t of axes.r.ticks) { const y = Y('r', t); g += `<text x="${W - M.r + 10}" y="${y + 5}" font-size="18" ${FONT}>${fmt(t)}</text>`; }
   for (const t of xticks ?? [...new Set(xs)]) { const x = X(t); g += `<line x1="${x}" x2="${x}" y1="${H - M.b}" y2="${H - M.b + 6}" stroke="#000"/><text x="${x}" y="${H - M.b + 28}" text-anchor="middle" font-size="18" ${FONT}>${fmt(t)}</text>`; }
   g += `<rect x="${M.l}" y="${M.t}" width="${W - M.l - M.r}" height="${H - M.t - M.b}" fill="none" stroke="#000"/>`;
-  g += `<text x="${(M.l + W - M.r) / 2}" y="${H - M.b + 62}" text-anchor="middle" font-size="20" ${FONT}>${xLabel}</text>`;
-  g += `<text transform="translate(26 ${(M.t + H - M.b) / 2}) rotate(-90)" text-anchor="middle" font-size="20" ${FONT}>${yl}</text>`;
-  if (yr) g += `<text transform="translate(${W - 24} ${(M.t + H - M.b) / 2}) rotate(90)" text-anchor="middle" font-size="20" ${FONT}>${yr}</text>`;
+  g += `<text x="${(M.l + W - M.r) / 2}" y="${H - M.b + 62}" text-anchor="middle" font-size="20" ${FONT}>${esc(xLabel)}</text>`;
+  g += `<text transform="translate(26 ${(M.t + H - M.b) / 2}) rotate(-90)" text-anchor="middle" font-size="20" ${FONT}>${esc(yl)}</text>`;
+  if (yr) g += `<text transform="translate(${W - 24} ${(M.t + H - M.b) / 2}) rotate(90)" text-anchor="middle" font-size="20" ${FONT}>${esc(yr)}</text>`;
   for (const s of series) {
     const side = s.axis || 'l';
     const d = s.pts.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(1)} ${Y(side, p[1]).toFixed(1)}`).join(' ');
@@ -55,10 +58,12 @@ function chart({ file, xLabel, yl, yr, series, xticks, xmin, xmax }) {
     const y = H - 24 + (i % 2 ? 0 : -24) * 0;
     const col = i % 2, row = Math.floor(i / 2);
     const x = M.l + col * 430, yy = H - 36 + row * 24;
-    g += `<line x1="${x}" x2="${x + 40}" y1="${yy - 6}" y2="${yy - 6}" stroke="${s.color}" stroke-width="3" ${s.dash ? `stroke-dasharray="${s.dash}"` : ''}/><text x="${x + 50}" y="${yy}" font-size="18" ${FONT}>${s.name}</text>`;
+    g += `<line x1="${x}" x2="${x + 40}" y1="${yy - 6}" y2="${yy - 6}" stroke="${s.color}" stroke-width="3" ${s.dash ? `stroke-dasharray="${s.dash}"` : ''}/><text x="${x + 50}" y="${yy}" font-size="18" ${FONT}>${esc(s.name)}</text>`;
   });
   g += '</svg>';
   fs.writeFileSync(path.join(out, file), g);
+  const bad = []; new DOMParser({ errorHandler: { warning() {}, error: (e) => bad.push(e), fatalError: (e) => bad.push(e) } }).parseFromString(g, 'image/svg+xml');
+  if (bad.length) throw new Error(`${file}: некорректный SVG: ${bad[0]}`);
   console.log('chart', file);
 }
 
