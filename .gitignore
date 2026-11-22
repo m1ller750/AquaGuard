@@ -9,3 +9,8 @@ tools/*/node_modules/
 Thumbs.db
 desktop.ini
 ~$*
+
+# документы для конкурса остаются только на компьютере
+docs/zerde/
+docs/pdf/
+tools/docs/
