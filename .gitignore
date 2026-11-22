@@ -1,0 +1,11 @@
+# ключи API не публикуем
+.env
+.env.*
+!.env.example
+
+# служебные файлы
+tools/pond/node_modules/
+*.log
+Thumbs.db
+desktop.ini
+~$*

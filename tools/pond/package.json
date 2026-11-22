@@ -1,0 +1,9 @@
+{
+  "name": "aquaguard-pond-tools",
+  "private": true,
+  "type": "module",
+  "description": "Конвертация FBX-модели водоёма и встраивание её в собранный фронтенд AquaGuard AI",
+  "dependencies": {
+    "three": "0.180.0"
+  }
+}
